@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>もっと広めたい映画9選</title>
+<meta name="description" content="もっと広めたい映画を9本えらんで、感性の近い人のおすすめに出会おう。" />
+
+<!-- Reactを動かすための部品（CDNから読み込むので難しい設定は不要） -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#080808;color:#f0ede8;font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;}
+.app{max-width:640px;margin:0 auto;padding:0 16px 80px;}
+
+.hero{padding:52px 0 36px;text-align:center;}
+.hero-ey{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#d4a843;margin-bottom:14px;}
+.hero-h1{font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,7vw,46px);font-weight:700;line-height:1.1;margin-bottom:18px;}
+.hero-sub{font-size:14px;color:#888880;line-height:1.7;max-width:360px;margin:0 auto;}
+
+.prog{display:flex;align-items:center;justify-content:center;gap:12px;margin:28px 0 20px;}
+.prog-dots{display:flex;gap:5px;}
+.pd{width:24px;height:3px;border-radius:2px;background:#222;transition:background .3s;}
+.pd.on{background:#d4a843;}
+.prog-lbl{font-size:12px;color:#666;}
+
+.srch{position:relative;margin-bottom:20px;}
+.srch-ic{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#555;font-size:14px;pointer-events:none;}
+.srch-in{width:100%;background:#121212;border:1px solid #222;border-radius:12px;padding:15px 20px 15px 48px;font-size:15px;font-family:inherit;color:#f0ede8;outline:none;transition:border-color .2s,background .2s;}
+.srch-in::placeholder{color:#444;}
+.srch-in:focus{border-color:#d4a843;background:#141414;}
+.srch-in:disabled{opacity:.4;cursor:not-allowed;}
+
+.drop{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#141414;border:1px solid #262626;border-radius:12px;overflow:hidden;z-index:200;box-shadow:0 24px 64px rgba(0,0,0,.8);max-height:360px;overflow-y:auto;}
+.di{display:flex;align-items:center;gap:12px;padding:9px 12px;cursor:pointer;border-bottom:1px solid #1a1a1a;transition:background .12s;}
+.di:last-child{border-bottom:none;}
+.di:hover{background:#1e1e1e;}
+.di-poster{width:32px;height:48px;border-radius:4px;object-fit:cover;background:#1a1a1a;flex-shrink:0;}
+.di-nfo{flex:1;min-width:0;}
+.di-ttl{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.di-meta{font-size:11px;color:#666;margin-top:2px;}
+.di-add{font-size:11px;border:1px solid #d4a843;border-radius:6px;padding:3px 10px;background:transparent;color:#d4a843;cursor:pointer;white-space:nowrap;transition:all .12s;flex-shrink:0;}
+.di-add:hover{background:#d4a843;color:#080808;}
+.drop-st{padding:18px;text-align:center;font-size:13px;color:#555;}
+
+.strip-wrap{display:flex;gap:8px;margin:4px 0 24px;align-items:stretch;}
+.perf{width:16px;flex-shrink:0;background-color:#161616;background-image:repeating-linear-gradient(to bottom,#161616 0,#161616 5px,#080808 5px,#080808 15px,#161616 15px,#161616 20px);border-radius:4px;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;flex:1;}
+
+.sl{aspect-ratio:2/3;border-radius:9px;overflow:hidden;position:relative;}
+.sl-empty{background:#0f0f0f;border:1px dashed #222;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;}
+.sl-empty:hover{border-color:#444;background:#141414;}
+.sl-n{font-size:10px;color:#2e2e2e;font-family:monospace;letter-spacing:1px;}
+.sl-plus{font-size:16px;color:#222;}
+.sl-filled{background:#0f0f0f;border:1px solid #1e1e1e;position:relative;}
+.sl-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35;}
+.sl-in{width:100%;height:100%;display:flex;flex-direction:column;padding:9px 7px;position:relative;}
+.sl-genre{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#d4a843;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.sl-ttl{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
+.sl-yr{font-size:10px;color:#ccc;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
+.sl-dir{font-size:9px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.sl-del{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.85);border:1px solid #333;color:#aaa;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;line-height:1;z-index:2;}
+.sl-del:hover{background:#c42a2a;border-color:#c42a2a;color:#fff;}
+
+.cta{margin-top:20px;}
+.cta-btn{width:100%;padding:17px;border-radius:12px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;border:none;transition:all .2s;letter-spacing:.4px;}
+.cta-btn.rdy{background:#d4a843;color:#080808;}
+.cta-btn.rdy:hover{background:#e8b94a;}
+.cta-btn.nrdy{background:#161616;color:#444;cursor:not-allowed;}
+.cta-hint{text-align:center;font-size:12px;color:#444;margin-top:10px;line-height:1.5;}
+.err-box{background:#2a1414;border:1px solid #4a1f1f;color:#e89a9a;font-size:12px;border-radius:10px;padding:10px 14px;margin-top:12px;text-align:center;}
+
+.load-scr{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;}
+.load-ic{font-size:52px;animation:spin 3s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-msg{font-size:15px;color:#888;}
+.load-sub{font-size:12px;color:#444;}
+
+.res-hero{padding:44px 0 28px;text-align:center;}
+.res-ey{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#d4a843;margin-bottom:12px;}
+.res-h2{font-family:'Playfair Display',Georgia,serif;font-size:clamp(20px,5vw,30px);margin-bottom:16px;line-height:1.2;}
+.res-badge{display:inline-block;font-size:12px;color:#888;background:#141414;border:1px solid #222;border-radius:100px;padding:6px 16px;margin-bottom:32px;}
+
+.rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;}
+.rc{aspect-ratio:2/3;border-radius:9px;background:#0f0f0f;border:1px solid #1e1e1e;position:relative;overflow:hidden;}
+.rc-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;}
+.rc-in{position:relative;z-index:1;padding:9px 7px;display:flex;flex-direction:column;height:100%;}
+.rc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#d4a843 50%,transparent);opacity:.5;z-index:2;}
+.rc-num{font-size:9px;color:#d4a843;font-family:monospace;letter-spacing:1px;margin-bottom:5px;text-shadow:0 1px 4px #000;}
+.rc-genre{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#ccc;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.rc-ttl{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
+.rc-yr{font-size:10px;color:#ddd;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
+.rc-dir{font-size:9px;color:#aaa;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.rc-rsn{font-size:9px;color:#e8c878;margin-top:5px;font-style:italic;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 4px #000;}
+
+.mypicks{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-bottom:20px;}
+.mypicks-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#3a3a3a;margin-bottom:12px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-size:11px;color:#666;background:#141414;border:1px solid #222;border-radius:100px;padding:4px 10px;white-space:nowrap;}
+
+.acts{display:flex;gap:10px;}
+.act-btn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;font-weight:500;border:none;transition:all .2s;text-align:center;}
+.act-btn.share{background:#141414;color:#f0ede8;border:1px solid #2a2a2a;}
+.act-btn.share:hover{border-color:#888;}
+.act-btn.reset{background:#0f0f0f;color:#555;border:1px solid #1a1a1a;}
+.act-btn.reset:hover{color:#f0ede8;border-color:#444;}
+
+.foot{text-align:center;font-size:11px;color:#333;padding-top:40px;}
+.foot a{color:#555;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const MSGS = [
+  "リストを保存しています...",
+  "感性の近いユーザーを探しています...",
+  "おすすめ映画を算出しています...",
+  "もうすぐ完成します..."
+];
+
+function getSessionId() {
+  let id = localStorage.getItem("m9-session");
+  if (!id) {
+    id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem("m9-session", id);
+  }
+  return id;
+}
+
+async function searchMovies(q) {
+  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  const d = await r.json();
+  return Array.isArray(d) ? d : [];
+}
+
+async function submitPicks(sessionId, picks) {
+  const r = await fetch("/api/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, picks })
+  });
+  if (!r.ok) throw new Error("送信に失敗しました");
+  return r.json();
+}
+
+function App() {
+  const [sid] = useState(getSessionId);
+  const [picks, setPicks] = useState([]);
+  const [q, setQ] = useState("");
+  const [drops, setDrops] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showDrop, setShowDrop] = useState(false);
+  const [phase, setPhase] = useState("select");
+  const [ldgMsg, setLdgMsg] = useState(0);
+  const [recs, setRecs] = useState([]);
+  const [simCnt, setSimCnt] = useState(0);
+  const [source, setSource] = useState("tmdb");
+  const [error, setError] = useState("");
+  const debRef = useRef(null);
+  const inpRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  const ready = picks.length === 9;
+  const remaining = 9 - picks.length;
+
+  useEffect(() => {
+    if (!q.trim() || q.trim().length < 2) {
+      setDrops([]); setShowDrop(false); return;
+    }
+    setSearching(true); setShowDrop(true);
+    clearTimeout(debRef.current);
+    debRef.current = setTimeout(async () => {
+      const r = await searchMovies(q);
+      setDrops(r.filter(x => x && x.id && x.title));
+      setSearching(false);
+    }, 400);
+    return () => clearTimeout(debRef.current);
+  }, [q]);
+
+  useEffect(() => {
+    const fn = e => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
+    };
+    document.addEventListener("mousedown", fn);
+    return () => document.removeEventListener("mousedown", fn);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "loading") return;
+    const t = setInterval(() => setLdgMsg(i => (i + 1) % 4), 1400);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  const addMovie = useCallback(m => {
+    if (picks.length >= 9 || picks.some(p => p.id === m.id)) return;
+    setPicks(prev => [...prev, m]);
+    setQ(""); setDrops([]); setShowDrop(false);
+  }, [picks]);
+
+  const delMovie = id => setPicks(prev => prev.filter(p => p.id !== id));
+
+  const handleSubmit = async () => {
+    if (!ready) return;
+    setError(""); setPhase("loading"); setLdgMsg(0);
+    try {
+      const data = await submitPicks(sid, picks);
+      setRecs(data.recs || []);
+      setSimCnt(data.similarUsers || 0);
+      setSource(data.source || "tmdb");
+      setPhase("results");
+    } catch (e) {
+      setError("通信に失敗しました。もう一度お試しください。");
+      setPhase("select");
+    }
+  };
+
+  const handleShare = () => {
+    const lines = picks.map((p, i) => `${i + 1}. ${p.title}（${p.year}）`).join("\n");
+    const txt = `私がもっと広めたい映画9選\n\n${lines}\n\n#もっと広めたい映画9選\n${location.origin}`;
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(txt)}`, "_blank");
+  };
+
+  const handleReset = () => {
+    setPicks([]); setRecs([]); setPhase("select");
+    setSimCnt(0); setSource("tmdb"); setQ("");
+  };
+
+  return (
+    <div className="app">
+      {phase === "select" && (
+        <React.Fragment>
+          <header className="hero">
+            <p className="hero-ey">Movie Recommendation</p>
+            <h1 className="hero-h1">もっと広めたい<br/>映画9選</h1>
+            <p className="hero-sub">もっと多くの人に観てほしい映画を9本えらんで。<br/>感性の近い人がおすすめする作品に出会えるかも。</p>
+          </header>
+
+          <div className="prog">
+            <div className="prog-dots">
+              {Array.from({length:9}).map((_,i) => <div key={i} className={"pd" + (i < picks.length ? " on" : "")} />)}
+            </div>
+            <span className="prog-lbl">{ready ? "9本そろいました ✓" : `あと${remaining}本`}</span>
+          </div>
+
+          <div className="srch" ref={wrapRef}>
+            <span className="srch-ic">🔍</span>
+            <input
+              ref={inpRef}
+              className="srch-in"
+              type="text"
+              placeholder={ready ? "9本選択済み" : "映画タイトルを検索..."}
+              value={q}
+              disabled={ready}
+              onChange={e => setQ(e.target.value)}
+              onFocus={() => q.trim().length >= 2 && setShowDrop(true)}
+            />
+            {showDrop && q.trim().length >= 2 && (
+              <div className="drop">
+                {searching ? <div className="drop-st">検索中...</div> :
+                 drops.length === 0 ? <div className="drop-st">見つかりませんでした</div> :
+                 drops.map(m => {
+                   const already = picks.some(p => p.id === m.id);
+                   return (
+                     <div key={m.id} className="di" onClick={() => !already && addMovie(m)}>
+                       {m.poster ? <img className="di-poster" src={m.poster} alt="" /> : <div className="di-poster" />}
+                       <div className="di-nfo">
+                         <div className="di-ttl">{m.title}</div>
+                         <div className="di-meta">{m.year} ・ {m.genre} ・ {m.director}</div>
+                       </div>
+                       {already ? <span style={{fontSize:11,color:"#444"}}>選択済</span> :
+                         <button className="di-add" onClick={e => {e.stopPropagation(); addMovie(m);}}>追加</button>}
+                     </div>
+                   );
+                 })}
+              </div>
+            )}
+          </div>
+
+          <div className="strip-wrap">
+            <div className="perf" />
+            <div className="grid">
+              {Array.from({length:9}).map((_,i) => {
+                const m = picks[i];
+                return m ? (
+                  <div key={m.id} className="sl sl-filled">
+                    {m.poster && <img className="sl-poster" src={m.poster} alt="" />}
+                    <div className="sl-in">
+                      <div className="sl-genre">{m.genre}</div>
+                      <div className="sl-ttl">{m.title}</div>
+                      <div className="sl-yr">{m.year}</div>
+                      <div className="sl-dir">{m.director}</div>
+                      <button className="sl-del" onClick={() => delMovie(m.id)}>×</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={i} className="sl sl-empty" onClick={() => !ready && inpRef.current && inpRef.current.focus()}>
+                    <span className="sl-n">0{i+1}</span>
+                    <span className="sl-plus">+</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="perf" />
+          </div>
+
+          <div className="cta">
+            <button className={"cta-btn " + (ready ? "rdy" : "nrdy")} onClick={handleSubmit} disabled={!ready}>
+              {ready ? "おすすめを見つける →" : `あと${remaining}本えらんでください`}
+            </button>
+            {ready && <p className="cta-hint">リストを保存し、感性の近い人のおすすめを表示します</p>}
+            {error && <div className="err-box">{error}</div>}
+          </div>
+        </React.Fragment>
+      )}
+
+      {phase === "loading" && (
+        <div className="load-scr">
+          <div className="load-ic">🎬</div>
+          <div className="load-msg">{MSGS[ldgMsg]}</div>
+          <div className="load-sub">あなたのリストを分析しています</div>
+        </div>
+      )}
+
+      {phase === "results" && (
+        <React.Fragment>
+          <div className="res-hero">
+            <p className="res-ey">あなたへのおすすめ</p>
+            <h2 className="res-h2">{simCnt >= 3 ? `${simCnt}人の感性が生んだ9本` : "あなたの趣味から見つけた9本"}</h2>
+            <div className="res-badge">{simCnt >= 3 ? `👥 ${simCnt}人の近い趣向のユーザーによる推薦` : "🎞️ まだユーザーが少ないため類似作品から推薦"}</div>
+          </div>
+
+          <div className="rec-grid">
+            {recs.map((m, i) => (
+              <div key={m.id || i} className="rc">
+                {m.poster && <img className="rc-poster" src={m.poster} alt="" />}
+                <div className="rc-in">
+                  <div className="rc-num">REC {String(i+1).padStart(2,"0")}</div>
+                  <div className="rc-genre">{m.genre}</div>
+                  <div className="rc-ttl">{m.title}</div>
+                  <div className="rc-yr">{m.year}</div>
+                  <div className="rc-dir">{m.director}</div>
+                  {m.reason && <div className="rc-rsn">{m.reason}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mypicks">
+            <div className="mypicks-lbl">あなたが選んだ9本</div>
+            <div className="chips">{picks.map(p => <span key={p.id} className="chip">{p.title}</span>)}</div>
+          </div>
+
+          <div className="acts">
+            <button className="act-btn share" onClick={handleShare}>𝕏 でシェア</button>
+            <button className="act-btn reset" onClick={handleReset}>やり直す</button>
+          </div>
+        </React.Fragment>
+      )}
+
+      <div className="foot">Powered by TMDB</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
