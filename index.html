@@ -140,6 +140,10 @@ function getSessionId() {
 async function searchMovies(q) {
   const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
   const d = await r.json();
+  if (!r.ok) {
+    console.error("検索API応答エラー:", r.status, d);
+    return [];
+  }
   return Array.isArray(d) ? d : [];
 }
 
@@ -180,9 +184,15 @@ function App() {
     setSearching(true); setShowDrop(true);
     clearTimeout(debRef.current);
     debRef.current = setTimeout(async () => {
-      const r = await searchMovies(q);
-      setDrops(r.filter(x => x && x.id && x.title));
-      setSearching(false);
+      try {
+        const r = await searchMovies(q);
+        setDrops(r.filter(x => x && x.id && x.title));
+      } catch (e) {
+        console.error("検索エラー:", e);
+        setDrops([]);
+      } finally {
+        setSearching(false);
+      }
     }, 400);
     return () => clearTimeout(debRef.current);
   }, [q]);
