@@ -1,7 +1,10 @@
 // このファイルがサーバー側の頭脳です。
 // 1) /api/search   → TMDBで映画を検索
-// 2) /api/submit   → 9本を保存しておすすめを計算
+// 2) /api/submit   → 4本を保存しておすすめを計算
 // 3) それ以外      → publicフォルダの中のサイト本体(index.html)を表示
+
+const PICK_COUNT = 4; // 選んでもらう本数
+const REC_COUNT = 4;  // おすすめとして出す本数（4本それぞれの「参照元」を必ず変える）
 
 const GENRE_JA = {
   28: "アクション", 12: "アドベンチャー", 16: "アニメーション", 35: "コメディ",
@@ -16,6 +19,18 @@ function json(obj, status = 200) {
     status,
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
   });
+}
+
+function toMovie(m, extra) {
+  return {
+    id: String(m.id),
+    title: m.title,
+    year: m.release_date ? m.release_date.slice(0, 4) : "----",
+    genre: (m.genre_ids || []).map(g => GENRE_JA[g]).filter(Boolean)[0] || "映画",
+    director: "",
+    poster: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : "",
+    ...extra
+  };
 }
 
 async function handleSearch(request, env) {
@@ -44,20 +59,39 @@ async function handleSearch(request, env) {
           const found = (cd.crew || []).find(p => p.job === "Director");
           director = found ? found.name : "";
         } catch {}
-        return {
-          id: String(m.id),
-          title: m.title,
-          year: m.release_date ? m.release_date.slice(0, 4) : "----",
-          genre: (m.genre_ids || []).map(g => GENRE_JA[g]).filter(Boolean)[0] || "映画",
-          director,
-          poster: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : ""
-        };
+        return toMovie(m, { director });
       })
     );
 
     return json(withDirector);
   } catch (e) {
     return json({ error: String(e) }, 500);
+  }
+}
+
+// 1本の映画について、TMDBの「おすすめ映画」一覧を取得する
+async function fetchTmdbRecs(movieId, key) {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/movie/${movieId}/recommendations?api_key=${key}&language=ja-JP`
+    );
+    const d = await r.json();
+    return d.results || [];
+  } catch {
+    return [];
+  }
+}
+
+// 配信状況（JustWatch経由）のリンクを取得する
+async function fetchWatchUrl(movieId, key) {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${key}`
+    );
+    const d = await r.json();
+    return (d.results && d.results.JP && d.results.JP.link) || null;
+  } catch {
+    return null;
   }
 }
 
@@ -74,8 +108,8 @@ async function handleSubmit(request, env) {
   }
 
   const { sessionId, picks } = body || {};
-  if (!sessionId || !Array.isArray(picks) || picks.length !== 9) {
-    return json({ error: "9本の映画が必要です" }, 400);
+  if (!sessionId || !Array.isArray(picks) || picks.length !== PICK_COUNT) {
+    return json({ error: `${PICK_COUNT}本の映画が必要です` }, 400);
   }
 
   const storeKey = `picks:${sessionId}`;
@@ -86,6 +120,7 @@ async function handleSubmit(request, env) {
 
   await KV.put(storeKey, JSON.stringify({ movies: myIds, meta: picks, ts: Date.now() }));
 
+  // 他の人たちの選んだリストを集める
   let sessions = [];
   try {
     const list = await KV.list({ prefix: "picks:" });
@@ -111,6 +146,8 @@ async function handleSubmit(request, env) {
   const similarUsers = ranked.length;
   let recs = [];
 
+  // 似た人が3人以上いれば、コミュニティのおすすめを使う
+  // （色々な人の組み合わせから来るので、自然と参照元が分散する）
   if (ranked.length >= 3) {
     const scored = {};
     ranked.slice(0, 80).forEach(s => {
@@ -120,40 +157,51 @@ async function handleSubmit(request, env) {
     });
     recs = Object.entries(scored)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 9)
+      .slice(0, REC_COUNT)
       .map(([id]) => ({
-        ...(metaMap[id] || { id, title: id, year: "", genre: "", director: "" }),
+        ...(metaMap[id] || { id, title: id, year: "", genre: "", director: "", poster: "" }),
         reason: "感性の近いユーザーのおすすめ"
       }));
   }
 
-  if (recs.length < 9 && TMDB_KEY) {
+  // 足りない分はTMDBの「似ている映画」で補充する。
+  // ここがポイント：4本それぞれの候補リストを「1本ずつ順番に」取っていくことで、
+  // 最初に選んだ1本だけに偏らないようにする（ラウンドロビン方式）。
+  if (recs.length < REC_COUNT && TMDB_KEY) {
     const exist = new Set([...myIds, ...recs.map(r => String(r.id))]);
-    for (const p of picks) {
-      if (recs.length >= 9) break;
-      try {
-        const r = await fetch(
-          `https://api.themoviedb.org/3/movie/${p.id}/recommendations?api_key=${TMDB_KEY}&language=ja-JP`
-        );
-        const d = await r.json();
-        for (const m of d.results || []) {
-          if (recs.length >= 9) break;
+    const pools = await Promise.all(
+      picks.map(async p => ({
+        pick: p,
+        results: await fetchTmdbRecs(p.id, TMDB_KEY),
+        idx: 0
+      }))
+    );
+
+    let progressed = true;
+    while (recs.length < REC_COUNT && progressed) {
+      progressed = false;
+      for (const pool of pools) {
+        if (recs.length >= REC_COUNT) break;
+        while (pool.idx < pool.results.length) {
+          const m = pool.results[pool.idx++];
           const mid = String(m.id);
           if (exist.has(mid)) continue;
           exist.add(mid);
-          recs.push({
-            id: mid,
-            title: m.title,
-            year: m.release_date ? m.release_date.slice(0, 4) : "----",
-            genre: (m.genre_ids || []).map(g => GENRE_JA[g]).filter(Boolean)[0] || "映画",
-            director: "",
-            poster: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : "",
-            reason: `「${p.title}」が好きな人へ`
-          });
+          recs.push(toMovie(m, { reason: `「${pool.pick.title}」が好きな人へ` }));
+          progressed = true;
+          break; // 1周につき1本だけ取って、次の映画の番に回す
         }
-      } catch {}
+      }
     }
   }
+
+  // 各おすすめ映画に「配信状況」のリンクを付け加える
+  recs = await Promise.all(
+    recs.map(async m => ({
+      ...m,
+      watchUrl: TMDB_KEY ? await fetchWatchUrl(m.id, TMDB_KEY) : null
+    }))
+  );
 
   return json({ recs, similarUsers });
 }
