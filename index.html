@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>もっと広めたい映画9選</title>
-<meta name="description" content="もっと広めたい映画を9本えらんで、感性の近い人のおすすめに出会おう。" />
+<title>もっと広めたい映画4選</title>
+<meta name="description" content="もっと広めたい映画を4本えらんで、感性の近い人のおすすめに出会おう。" />
 
 <!-- Reactを動かすための部品（CDNから読み込むので難しい設定は不要） -->
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
@@ -51,21 +51,21 @@ body{background:#080808;color:#f0ede8;font-family:'DM Sans',system-ui,sans-serif
 
 .strip-wrap{display:flex;gap:8px;margin:4px 0 24px;align-items:stretch;}
 .perf{width:16px;flex-shrink:0;background-color:#161616;background-image:repeating-linear-gradient(to bottom,#161616 0,#161616 5px,#080808 5px,#080808 15px,#161616 15px,#161616 20px);border-radius:4px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;flex:1;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;flex:1;}
 
 .sl{aspect-ratio:2/3;border-radius:9px;overflow:hidden;position:relative;}
 .sl-empty{background:#0f0f0f;border:1px dashed #222;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;}
 .sl-empty:hover{border-color:#444;background:#141414;}
-.sl-n{font-size:10px;color:#2e2e2e;font-family:monospace;letter-spacing:1px;}
-.sl-plus{font-size:16px;color:#222;}
+.sl-n{font-size:11px;color:#2e2e2e;font-family:monospace;letter-spacing:1px;}
+.sl-plus{font-size:20px;color:#222;}
 .sl-filled{background:#0f0f0f;border:1px solid #1e1e1e;position:relative;}
 .sl-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35;}
-.sl-in{width:100%;height:100%;display:flex;flex-direction:column;padding:9px 7px;position:relative;}
-.sl-genre{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#d4a843;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
-.sl-ttl{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
-.sl-yr{font-size:10px;color:#ccc;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
-.sl-dir{font-size:9px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
-.sl-del{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.85);border:1px solid #333;color:#aaa;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;line-height:1;z-index:2;}
+.sl-in{width:100%;height:100%;display:flex;flex-direction:column;padding:12px 10px;position:relative;}
+.sl-genre{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#d4a843;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.sl-ttl{font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
+.sl-yr{font-size:11px;color:#ccc;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
+.sl-dir{font-size:10px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.sl-del{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.85);border:1px solid #333;color:#aaa;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;line-height:1;z-index:2;}
 .sl-del:hover{background:#c42a2a;border-color:#c42a2a;color:#fff;}
 
 .cta{margin-top:20px;}
@@ -87,17 +87,19 @@ body{background:#080808;color:#f0ede8;font-family:'DM Sans',system-ui,sans-serif
 .res-h2{font-family:'Playfair Display',Georgia,serif;font-size:clamp(20px,5vw,30px);margin-bottom:16px;line-height:1.2;}
 .res-badge{display:inline-block;font-size:12px;color:#888;background:#141414;border:1px solid #222;border-radius:100px;padding:6px 16px;margin-bottom:32px;}
 
-.rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;}
-.rc{aspect-ratio:2/3;border-radius:9px;background:#0f0f0f;border:1px solid #1e1e1e;position:relative;overflow:hidden;}
+.rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:28px;}
+.rc{aspect-ratio:2/3;border-radius:9px;background:#0f0f0f;border:1px solid #1e1e1e;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s;}
+.rc:hover{border-color:#d4a843;transform:translateY(-2px);}
 .rc-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;}
-.rc-in{position:relative;z-index:1;padding:9px 7px;display:flex;flex-direction:column;height:100%;}
+.rc-in{position:relative;z-index:1;padding:12px 10px;display:flex;flex-direction:column;height:100%;}
 .rc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#d4a843 50%,transparent);opacity:.5;z-index:2;}
-.rc-num{font-size:9px;color:#d4a843;font-family:monospace;letter-spacing:1px;margin-bottom:5px;text-shadow:0 1px 4px #000;}
-.rc-genre{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#ccc;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
-.rc-ttl{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
-.rc-yr{font-size:10px;color:#ddd;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
-.rc-dir{font-size:9px;color:#aaa;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
-.rc-rsn{font-size:9px;color:#e8c878;margin-top:5px;font-style:italic;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 4px #000;}
+.rc-num{font-size:10px;color:#d4a843;font-family:monospace;letter-spacing:1px;margin-bottom:6px;text-shadow:0 1px 4px #000;}
+.rc-genre{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#ccc;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.rc-ttl{font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;line-height:1.35;flex:1;text-shadow:0 1px 4px #000;}
+.rc-yr{font-size:11px;color:#ddd;margin-top:4px;font-family:monospace;text-shadow:0 1px 4px #000;}
+.rc-dir{font-size:10px;color:#aaa;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000;}
+.rc-rsn{font-size:10px;color:#e8c878;margin-top:6px;font-style:italic;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 4px #000;}
+.rc-tap{position:absolute;bottom:8px;right:8px;font-size:9px;color:#999;background:rgba(0,0,0,.6);border-radius:100px;padding:3px 8px;z-index:1;}
 
 .mypicks{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-bottom:20px;}
 .mypicks-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#3a3a3a;margin-bottom:12px;}
@@ -108,18 +110,42 @@ body{background:#080808;color:#f0ede8;font-family:'DM Sans',system-ui,sans-serif
 .act-btn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;font-weight:500;border:none;transition:all .2s;text-align:center;}
 .act-btn.share{background:#141414;color:#f0ede8;border:1px solid #2a2a2a;}
 .act-btn.share:hover{border-color:#888;}
+.act-btn.share:disabled{opacity:.5;cursor:wait;}
 .act-btn.reset{background:#0f0f0f;color:#555;border:1px solid #1a1a1a;}
 .act-btn.reset:hover{color:#f0ede8;border-color:#444;}
 
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #333;color:#e8c878;font-size:13px;padding:12px 20px;border-radius:100px;box-shadow:0 12px 32px rgba(0,0,0,.5);z-index:500;max-width:90vw;text-align:center;}
+
 .foot{text-align:center;font-size:11px;color:#333;padding-top:40px;}
 .foot a{color:#555;}
+
+/* モーダル */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:400;padding:20px;}
+.modal{background:#101010;border:1px solid #262626;border-radius:16px;max-width:380px;width:100%;overflow:hidden;}
+.modal-poster{width:100%;aspect-ratio:16/9;object-fit:cover;background:#1a1a1a;display:block;}
+.modal-body{padding:22px;}
+.modal-genre{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#d4a843;margin-bottom:8px;}
+.modal-ttl{font-family:'Playfair Display',Georgia,serif;font-size:21px;font-weight:700;line-height:1.3;margin-bottom:8px;}
+.modal-meta{font-size:12px;color:#777;margin-bottom:10px;}
+.modal-rsn{font-size:12px;color:#e8c878;font-style:italic;margin-bottom:20px;line-height:1.6;}
+.modal-links{display:flex;flex-direction:column;gap:8px;}
+.modal-link{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;transition:all .15s;border:1px solid #2a2a2a;color:#f0ede8;}
+.modal-link.eiga{background:#1a1408;border-color:#d4a843;color:#d4a843;}
+.modal-link.eiga:hover{background:#d4a843;color:#080808;}
+.modal-link.watch{background:#141414;}
+.modal-link.watch:hover{border-color:#888;}
+.modal-link.disabled{opacity:.35;pointer-events:none;}
+.modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.7);border:1px solid #333;color:#ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:2;}
+.modal-jw{font-size:10px;color:#444;text-align:center;margin-top:10px;}
 </style>
 </head>
 <body>
 <div id="root"></div>
 
-<script type="text/babel" data-presets="react">
+<script type="text/plain" id="app-src">
 const { useState, useEffect, useRef, useCallback } = React;
+
+const PICK_COUNT = 4;
 
 const MSGS = [
   "リストを保存しています...",
@@ -140,6 +166,10 @@ function getSessionId() {
 async function searchMovies(q) {
   const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
   const d = await r.json();
+  if (!r.ok) {
+    console.error("検索API応答エラー:", r.status, d);
+    return [];
+  }
   return Array.isArray(d) ? d : [];
 }
 
@@ -153,6 +183,86 @@ async function submitPicks(sessionId, picks) {
   return r.json();
 }
 
+// ── シェア画像（4枚のポスターを2x2に並べたPNG画像）を作る ──
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function drawCover(ctx, img, x, y, w, h) {
+  const ir = img.width / img.height;
+  const tr = w / h;
+  let sx, sy, sw, sh;
+  if (ir > tr) { sh = img.height; sw = sh * tr; sx = (img.width - sw) / 2; sy = 0; }
+  else { sw = img.width; sh = sw / tr; sx = 0; sy = (img.height - sh) / 2; }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
+function wrapLines(ctx, text, maxWidth, maxLines) {
+  const out = [];
+  let line = "";
+  for (const ch of text) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) { out.push(line); line = ch; }
+    else line = test;
+    if (out.length >= maxLines) break;
+  }
+  if (line && out.length < maxLines) out.push(line);
+  return out.slice(0, maxLines);
+}
+
+async function buildShareImage(picks) {
+  const TILE = 380, GAP = 6, TOP = 110;
+  const W = TILE * 2 + GAP;
+  const H = TOP + TILE * 2 + GAP;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#080808";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#d4a843";
+  ctx.font = "bold 36px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`私の好きな映画${PICK_COUNT}選`, W / 2, 68);
+
+  const positions = [[0, TOP], [TILE + GAP, TOP], [0, TOP + TILE + GAP], [TILE + GAP, TOP + TILE + GAP]];
+
+  for (let i = 0; i < picks.length && i < 4; i++) {
+    const m = picks[i];
+    const [x, y] = positions[i];
+    try {
+      if (m.poster) {
+        const img = await loadImage(m.poster);
+        drawCover(ctx, img, x, y, TILE, TILE);
+      } else {
+        ctx.fillStyle = "#141414"; ctx.fillRect(x, y, TILE, TILE);
+      }
+    } catch {
+      ctx.fillStyle = "#141414"; ctx.fillRect(x, y, TILE, TILE);
+    }
+    const grad = ctx.createLinearGradient(x, y + TILE - 110, x, y + TILE);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(1, "rgba(0,0,0,.88)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y + TILE - 110, TILE, 110);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 22px sans-serif";
+    ctx.textAlign = "left";
+    const lines = wrapLines(ctx, m.title, TILE - 32, 2);
+    lines.forEach((l, li) => ctx.fillText(l, x + 16, y + TILE - 58 + li * 28));
+  }
+
+  return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+}
+
 function App() {
   const [sid] = useState(getSessionId);
   const [picks, setPicks] = useState([]);
@@ -164,33 +274,38 @@ function App() {
   const [ldgMsg, setLdgMsg] = useState(0);
   const [recs, setRecs] = useState([]);
   const [simCnt, setSimCnt] = useState(0);
-  const [source, setSource] = useState("tmdb");
   const [error, setError] = useState("");
+  const [selectedRec, setSelectedRec] = useState(null);
+  const [sharing, setSharing] = useState(false);
+  const [toast, setToast] = useState("");
   const debRef = useRef(null);
   const inpRef = useRef(null);
   const wrapRef = useRef(null);
+  const toastRef = useRef(null);
 
-  const ready = picks.length === 9;
-  const remaining = 9 - picks.length;
+  const ready = picks.length === PICK_COUNT;
+  const remaining = PICK_COUNT - picks.length;
 
   useEffect(() => {
-    if (!q.trim() || q.trim().length < 2) {
-      setDrops([]); setShowDrop(false); return;
-    }
+    if (!q.trim() || q.trim().length < 2) { setDrops([]); setShowDrop(false); return; }
     setSearching(true); setShowDrop(true);
     clearTimeout(debRef.current);
     debRef.current = setTimeout(async () => {
-      const r = await searchMovies(q);
-      setDrops(r.filter(x => x && x.id && x.title));
-      setSearching(false);
+      try {
+        const r = await searchMovies(q);
+        setDrops(r.filter(x => x && x.id && x.title));
+      } catch (e) {
+        console.error("検索エラー:", e);
+        setDrops([]);
+      } finally {
+        setSearching(false);
+      }
     }, 400);
     return () => clearTimeout(debRef.current);
   }, [q]);
 
   useEffect(() => {
-    const fn = e => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
-    };
+    const fn = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false); };
     document.addEventListener("mousedown", fn);
     return () => document.removeEventListener("mousedown", fn);
   }, []);
@@ -201,8 +316,14 @@ function App() {
     return () => clearInterval(t);
   }, [phase]);
 
+  const showToast = msg => {
+    setToast(msg);
+    clearTimeout(toastRef.current);
+    toastRef.current = setTimeout(() => setToast(""), 5000);
+  };
+
   const addMovie = useCallback(m => {
-    if (picks.length >= 9 || picks.some(p => p.id === m.id)) return;
+    if (picks.length >= PICK_COUNT || picks.some(p => p.id === m.id)) return;
     setPicks(prev => [...prev, m]);
     setQ(""); setDrops([]); setShowDrop(false);
   }, [picks]);
@@ -216,7 +337,6 @@ function App() {
       const data = await submitPicks(sid, picks);
       setRecs(data.recs || []);
       setSimCnt(data.similarUsers || 0);
-      setSource(data.source || "tmdb");
       setPhase("results");
     } catch (e) {
       setError("通信に失敗しました。もう一度お試しください。");
@@ -224,15 +344,44 @@ function App() {
     }
   };
 
-  const handleShare = () => {
-    const lines = picks.map((p, i) => `${i + 1}. ${p.title}（${p.year}）`).join("\n");
-    const txt = `私がもっと広めたい映画9選\n\n${lines}\n\n#もっと広めたい映画9選\n${location.origin}`;
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(txt)}`, "_blank");
+  const handleShare = async () => {
+    setSharing(true);
+    const shareText = `私の好きな映画${PICK_COUNT}選\n${location.origin}`;
+    let blob = null;
+    try {
+      blob = await buildShareImage(picks);
+    } catch (e) {
+      console.error("画像生成エラー:", e);
+    }
+
+    if (blob && window.navigator && navigator.canShare && navigator.share) {
+      try {
+        const file = new File([blob], "my-movies.png", { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text: shareText });
+          setSharing(false);
+          return;
+        }
+      } catch (e) {
+        // ユーザーがキャンセルした場合などはフォールバックへ
+      }
+    }
+
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "my-movies.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast("画像をダウンロードしました。Xの投稿画面に手動で添付してください📎");
+    }
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
+    setSharing(false);
   };
 
   const handleReset = () => {
     setPicks([]); setRecs([]); setPhase("select");
-    setSimCnt(0); setSource("tmdb"); setQ("");
+    setSimCnt(0); setQ(""); setSelectedRec(null);
   };
 
   return (
@@ -241,15 +390,15 @@ function App() {
         <React.Fragment>
           <header className="hero">
             <p className="hero-ey">Movie Recommendation</p>
-            <h1 className="hero-h1">もっと広めたい<br/>映画9選</h1>
-            <p className="hero-sub">もっと多くの人に観てほしい映画を9本えらんで。<br/>感性の近い人がおすすめする作品に出会えるかも。</p>
+            <h1 className="hero-h1">もっと広めたい<br/>映画{PICK_COUNT}選</h1>
+            <p className="hero-sub">もっと多くの人に観てほしい映画を{PICK_COUNT}本えらんで。<br/>感性の近い人がおすすめする作品に出会えるかも。</p>
           </header>
 
           <div className="prog">
             <div className="prog-dots">
-              {Array.from({length:9}).map((_,i) => <div key={i} className={"pd" + (i < picks.length ? " on" : "")} />)}
+              {Array.from({length: PICK_COUNT}).map((_,i) => <div key={i} className={"pd" + (i < picks.length ? " on" : "")} />)}
             </div>
-            <span className="prog-lbl">{ready ? "9本そろいました ✓" : `あと${remaining}本`}</span>
+            <span className="prog-lbl">{ready ? `${PICK_COUNT}本そろいました ✓` : `あと${remaining}本`}</span>
           </div>
 
           <div className="srch" ref={wrapRef}>
@@ -258,7 +407,7 @@ function App() {
               ref={inpRef}
               className="srch-in"
               type="text"
-              placeholder={ready ? "9本選択済み" : "映画タイトルを検索..."}
+              placeholder={ready ? `${PICK_COUNT}本選択済み` : "映画タイトルを検索..."}
               value={q}
               disabled={ready}
               onChange={e => setQ(e.target.value)}
@@ -289,7 +438,7 @@ function App() {
           <div className="strip-wrap">
             <div className="perf" />
             <div className="grid">
-              {Array.from({length:9}).map((_,i) => {
+              {Array.from({length: PICK_COUNT}).map((_,i) => {
                 const m = picks[i];
                 return m ? (
                   <div key={m.id} className="sl sl-filled">
@@ -335,13 +484,13 @@ function App() {
         <React.Fragment>
           <div className="res-hero">
             <p className="res-ey">あなたへのおすすめ</p>
-            <h2 className="res-h2">{simCnt >= 3 ? `${simCnt}人の感性が生んだ9本` : "あなたの趣味から見つけた9本"}</h2>
+            <h2 className="res-h2">{simCnt >= 3 ? `${simCnt}人の感性が生んだ${PICK_COUNT}本` : `あなたの趣味から見つけた${PICK_COUNT}本`}</h2>
             <div className="res-badge">{simCnt >= 3 ? `👥 ${simCnt}人の近い趣向のユーザーによる推薦` : "🎞️ まだユーザーが少ないため類似作品から推薦"}</div>
           </div>
 
           <div className="rec-grid">
             {recs.map((m, i) => (
-              <div key={m.id || i} className="rc">
+              <div key={m.id || i} className="rc" onClick={() => setSelectedRec(m)}>
                 {m.poster && <img className="rc-poster" src={m.poster} alt="" />}
                 <div className="rc-in">
                   <div className="rc-num">REC {String(i+1).padStart(2,"0")}</div>
@@ -351,28 +500,94 @@ function App() {
                   <div className="rc-dir">{m.director}</div>
                   {m.reason && <div className="rc-rsn">{m.reason}</div>}
                 </div>
+                <div className="rc-tap">タップで詳細</div>
               </div>
             ))}
           </div>
 
           <div className="mypicks">
-            <div className="mypicks-lbl">あなたが選んだ9本</div>
+            <div className="mypicks-lbl">あなたが選んだ{PICK_COUNT}本</div>
             <div className="chips">{picks.map(p => <span key={p.id} className="chip">{p.title}</span>)}</div>
           </div>
 
           <div className="acts">
-            <button className="act-btn share" onClick={handleShare}>𝕏 でシェア</button>
+            <button className="act-btn share" onClick={handleShare} disabled={sharing}>
+              {sharing ? "画像を作成中..." : "𝕏 でシェア"}
+            </button>
             <button className="act-btn reset" onClick={handleReset}>やり直す</button>
           </div>
         </React.Fragment>
       )}
 
       <div className="foot">Powered by TMDB</div>
+
+      {selectedRec && (
+        <div className="ov" onClick={() => setSelectedRec(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedRec(null)}>×</button>
+            {selectedRec.poster
+              ? <img className="modal-poster" src={selectedRec.poster} alt="" />
+              : <div className="modal-poster" />}
+            <div className="modal-body">
+              <div className="modal-genre">{selectedRec.genre}</div>
+              <div className="modal-ttl">{selectedRec.title}</div>
+              <div className="modal-meta">{selectedRec.year}{selectedRec.director ? ` ・ ${selectedRec.director}` : ""}</div>
+              {selectedRec.reason && <div className="modal-rsn">{selectedRec.reason}</div>}
+              <div className="modal-links">
+                <a
+                  className="modal-link eiga"
+                  href={`https://eiga.com/search/${encodeURIComponent(selectedRec.title)}/`}
+                  target="_blank" rel="noopener noreferrer"
+                >🎬 映画.comで詳細を見る</a>
+                <a
+                  className={"modal-link watch" + (selectedRec.watchUrl ? "" : " disabled")}
+                  href={selectedRec.watchUrl || "#"}
+                  target="_blank" rel="noopener noreferrer"
+                >📺 {selectedRec.watchUrl ? "配信状況を見る" : "配信情報が見つかりません"}</a>
+              </div>
+              {selectedRec.watchUrl && <div className="modal-jw">配信情報: JustWatch</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+<!-- 上の <script type="text/plain"> は「ただの文章」としてブラウザに無視されている。
+     ここで自分の手で安全に変換して実行する（古いJSXの書き方=classicを明示することで
+     新しいBabelが勝手にimport文を混ぜてくるのを防ぐ） -->
+<script>
+  (function () {
+    var src = document.getElementById("app-src").textContent;
+    var out = Babel.transform(src, {
+      presets: [["react", { runtime: "classic" }]]
+    }).code;
+    var s = document.createElement("script");
+    s.textContent = out;
+    document.body.appendChild(s);
+  })();
+</script>
+
+<!-- 保険：上のスクリプトが何らかの理由で動かなかったとき、
+     真っ暗な画面のままにせず、エラーであることが分かるようにする -->
+<script>
+  setTimeout(function () {
+    var root = document.getElementById("root");
+    if (root && root.children.length === 0) {
+      root.innerHTML =
+        '<div style="padding:80px 24px;text-align:center;color:#999;font-family:sans-serif;line-height:1.8;max-width:480px;margin:0 auto;">' +
+        '<p style="font-size:18px;color:#d4a843;margin-bottom:14px;">読み込みに失敗しました</p>' +
+        '<p style="font-size:13px;">通信環境が不安定か、サイトの一部ファイルが正しく読み込めていない可能性があります。<br><br>' +
+        "ページを再読み込みしても直らない場合は、サイト管理者にこの画面のスクリーンショットを送ってください。</p>" +
+        "</div>";
+    }
+  }, 6000);
 </script>
 </body>
 </html>
