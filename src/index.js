@@ -82,16 +82,27 @@ async function fetchTmdbRecs(movieId, key) {
   }
 }
 
-// 配信状況（JustWatch経由）のリンクを取得する
-async function fetchWatchUrl(movieId, key) {
+// 配信状況（JustWatch経由のリンク + 実際に配信しているサービス名一覧）を取得する。
+// providers（サービス名のリスト）を一緒に返しておくことで、
+// 将来「Netflixならこのアフィリエイトリンク」のように振り分けやすくしている。
+async function fetchWatchProviders(movieId, key) {
   try {
     const r = await fetch(
       `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${key}`
     );
     const d = await r.json();
-    return (d.results && d.results.JP && d.results.JP.link) || null;
+    const jp = (d.results && d.results.JP) || {};
+    const names = [
+      ...(jp.flatrate || []),
+      ...(jp.ads || []),
+      ...(jp.free || [])
+    ].map(p => p.provider_name);
+    return {
+      watchUrl: jp.link || null,
+      providers: [...new Set(names)]
+    };
   } catch {
-    return null;
+    return { watchUrl: null, providers: [] };
   }
 }
 
@@ -195,12 +206,12 @@ async function handleSubmit(request, env) {
     }
   }
 
-  // 各おすすめ映画に「配信状況」のリンクを付け加える
+  // 各おすすめ映画に「配信状況」と「配信サービス名一覧」を付け加える
   recs = await Promise.all(
-    recs.map(async m => ({
-      ...m,
-      watchUrl: TMDB_KEY ? await fetchWatchUrl(m.id, TMDB_KEY) : null
-    }))
+    recs.map(async m => {
+      const w = TMDB_KEY ? await fetchWatchProviders(m.id, TMDB_KEY) : { watchUrl: null, providers: [] };
+      return { ...m, watchUrl: w.watchUrl, providers: w.providers };
+    })
   );
 
   return json({ recs, similarUsers });
