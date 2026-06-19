@@ -206,6 +206,34 @@ async function handleSubmit(request, env) {
   return json({ recs, similarUsers });
 }
 
+// TMDBの画像を代わりに取りに行って返す係。
+// これを経由させると「他サイトからの読み込み許可（CORS）」のヘッダーを
+// 自分でつけられるので、Xシェア用の画像合成（canvas）が可能になる。
+async function handleImageProxy(request) {
+  const url = new URL(request.url);
+  const target = url.searchParams.get("url") || "";
+
+  // 安全のため、TMDBの画像サーバー以外は中継しない
+  if (!target.startsWith("https://image.tmdb.org/")) {
+    return new Response("invalid url", { status: 400 });
+  }
+
+  try {
+    const r = await fetch(target, { cf: { cacheTtl: 86400, cacheEverything: true } });
+    if (!r.ok) return new Response("not found", { status: 404 });
+    const buf = await r.arrayBuffer();
+    return new Response(buf, {
+      headers: {
+        "Content-Type": r.headers.get("Content-Type") || "image/jpeg",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=86400"
+      }
+    });
+  } catch (e) {
+    return new Response("error", { status: 500 });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -215,6 +243,9 @@ export default {
     }
     if (url.pathname === "/api/submit" && request.method === "POST") {
       return handleSubmit(request, env);
+    }
+    if (url.pathname === "/api/img" && request.method === "GET") {
+      return handleImageProxy(request);
     }
 
     // それ以外のアクセスは、public フォルダの中のファイル（サイト本体）を返す
