@@ -27,10 +27,68 @@ function toMovie(m, extra) {
     title: m.title,
     year: m.release_date ? m.release_date.slice(0, 4) : "----",
     genre: (m.genre_ids || []).map(g => GENRE_JA[g]).filter(Boolean)[0] || "映画",
+    genreIds: m.genre_ids || [], // 監督マッチ機能で使う「ジャンルの傾向」計算用
     director: "",
     poster: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : "",
     ...extra
   };
+}
+
+// タイトルで映画を検索する（従来通り）
+async function searchByTitle(q, key) {
+  const r = await fetch(
+    `https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${encodeURIComponent(q)}&language=ja-JP&include_adult=false`
+  );
+  const data = await r.json();
+  const results = (data.results || []).slice(0, 6);
+
+  return Promise.all(
+    results.map(async m => {
+      let director = "";
+      try {
+        const c = await fetch(
+          `https://api.themoviedb.org/3/movie/${m.id}/credits?api_key=${key}&language=ja-JP`
+        );
+        const cd = await c.json();
+        const found = (cd.crew || []).find(p => p.job === "Director");
+        director = found ? found.name : "";
+      } catch {}
+      return toMovie(m, { director });
+    })
+  );
+}
+
+// 人物として検索し、もし監督っぽい人が見つかったら、その人が撮った映画一覧を返す
+async function searchByDirector(q, key) {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/search/person?api_key=${key}&query=${encodeURIComponent(q)}&language=ja-JP`
+    );
+    const d = await r.json();
+    const people = (d.results || []).slice(0, 2); // 同姓同名対策で上位2人まで確認
+
+    const lists = await Promise.all(
+      people.map(async p => {
+        try {
+          const cr = await fetch(
+            `https://api.themoviedb.org/3/person/${p.id}/movie_credits?api_key=${key}&language=ja-JP`
+          );
+          const cd = await cr.json();
+          return (cd.crew || [])
+            .filter(c => c.job === "Director")
+            .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+            .slice(0, 6)
+            .map(m => toMovie(m, { director: p.name })); // 監督名はすでに分かっているので追加の通信は不要
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    return lists.flat();
+  } catch {
+    return [];
+  }
 }
 
 async function handleSearch(request, env) {
@@ -42,28 +100,22 @@ async function handleSearch(request, env) {
   if (!key) return json({ error: "TMDB_API_KEYが設定されていません" }, 500);
 
   try {
-    const searchRes = await fetch(
-      `https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${encodeURIComponent(q)}&language=ja-JP&include_adult=false`
-    );
-    const data = await searchRes.json();
-    const results = (data.results || []).slice(0, 6);
+    // タイトル検索と監督名検索を同時に行い、結果をマージする
+    const [titleHits, directorHits] = await Promise.all([
+      searchByTitle(q, key),
+      searchByDirector(q, key)
+    ]);
 
-    const withDirector = await Promise.all(
-      results.map(async m => {
-        let director = "";
-        try {
-          const c = await fetch(
-            `https://api.themoviedb.org/3/movie/${m.id}/credits?api_key=${key}&language=ja-JP`
-          );
-          const cd = await c.json();
-          const found = (cd.crew || []).find(p => p.job === "Director");
-          director = found ? found.name : "";
-        } catch {}
-        return toMovie(m, { director });
-      })
-    );
+    const seen = new Set();
+    const merged = [];
+    for (const m of [...titleHits, ...directorHits]) {
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      merged.push(m);
+      if (merged.length >= 8) break; // 監督検索だと候補が増えやすいので少し枠を広げる
+    }
 
-    return json(withDirector);
+    return json(merged);
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
@@ -104,6 +156,86 @@ async function fetchWatchProviders(movieId, key) {
   } catch {
     return { watchUrl: null, providers: [] };
   }
+}
+
+// 名前から人物を検索し、それらしき人のTMDB上のIDを返す
+async function findDirectorId(name, key) {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/search/person?api_key=${key}&query=${encodeURIComponent(name)}`
+    );
+    const d = await r.json();
+    const list = d.results || [];
+    const director = list.find(p => p.known_for_department === "Directing") || list[0];
+    return director ? director.id : null;
+  } catch {
+    return null;
+  }
+}
+
+// その監督が撮った全作品から「ジャンルの傾向（割合）」を作る。
+// 例：ドラマ40%、スリラー30%、SF30%、のような分布。
+async function fetchDirectorGenreProfile(personId, key) {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/person/${personId}/movie_credits?api_key=${key}`
+    );
+    const d = await r.json();
+    const directed = (d.crew || []).filter(c => c.job === "Director");
+    const counts = {};
+    let total = 0;
+    directed.forEach(m => {
+      (m.genre_ids || []).forEach(g => { counts[g] = (counts[g] || 0) + 1; total++; });
+    });
+    if (total === 0) return null;
+    const freq = {};
+    Object.entries(counts).forEach(([g, c]) => { freq[g] = c / total; });
+    return { freq, filmCount: directed.length };
+  } catch {
+    return null;
+  }
+}
+
+// 「あなたの趣味は◯◯監督と◯◯%近い」を計算する。
+//
+// 仕組み：大きな"監督データベース"を別途用意するのは大変なので、
+// ユーザーが選んだ4本の「監督」自身の全フィルモグラフィーをTMDBから取得し、
+// その監督の作品ジャンルの傾向と、ユーザー自身の4本のジャンルの傾向を比較する。
+// （＝「その監督の１本がたまたま好み」なのか「その監督のスタイル全体が好み」なのかを測る）
+//
+// 比較には「ヒストグラム交差法」を使う：両者の割合の小さい方を足し合わせるだけの
+// シンプルな指標で、0〜100%にきれいに収まる。
+async function computeDirectorAffinity(picks, key) {
+  if (!key) return null;
+
+  const userCounts = {};
+  let userTotal = 0;
+  picks.forEach(p => {
+    (p.genreIds || []).forEach(g => { userCounts[g] = (userCounts[g] || 0) + 1; userTotal++; });
+  });
+  if (userTotal === 0) return null;
+  const userFreq = {};
+  Object.entries(userCounts).forEach(([g, c]) => { userFreq[g] = c / userTotal; });
+
+  const directorNames = [...new Set(picks.map(p => p.director).filter(Boolean))];
+  let best = null;
+
+  for (const name of directorNames) {
+    const personId = await findDirectorId(name, key);
+    if (!personId) continue;
+    const profile = await fetchDirectorGenreProfile(personId, key);
+    // 監督作品数が少なすぎると「たまたま一致」になりやすいので、信頼度の低いものは除外
+    if (!profile || profile.filmCount < 3) continue;
+
+    let score = 0;
+    Object.keys(userFreq).forEach(g => {
+      score += Math.min(userFreq[g], profile.freq[g] || 0);
+    });
+    const pct = Math.round(score * 100);
+    if (!best || pct > best.pct) best = { name, pct, filmCount: profile.filmCount };
+  }
+
+  return best;
 }
 
 async function handleSubmit(request, env) {
@@ -214,7 +346,15 @@ async function handleSubmit(request, env) {
     })
   );
 
-  return json({ recs, similarUsers });
+  // 「あなたの趣味は◯◯監督と◯◯%近い」を計算する（失敗しても他の結果は返す）
+  let directorMatch = null;
+  try {
+    directorMatch = await computeDirectorAffinity(picks, TMDB_KEY);
+  } catch (e) {
+    directorMatch = null;
+  }
+
+  return json({ recs, similarUsers, directorMatch });
 }
 
 // TMDBの画像を代わりに取りに行って返す係。
