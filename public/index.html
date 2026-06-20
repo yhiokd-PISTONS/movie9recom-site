@@ -237,9 +237,24 @@ function wrapLines(ctx, text, maxWidth, maxLines) {
   return out.slice(0, maxLines);
 }
 
-// ── デザインパーツ：祖父江慎的な「コラージュ感・手仕事感」を意識した装飾 ──
-// （角丸の四角、ドット柄の背景、貼り合わせたようなテープのアクセント、
-//   少し傾いた配置とはんこ風のタイトルで「紙モノ感」を出している）
+// ── デザインパーツ：余白を活かしたミニマルなレイアウト ──
+// 装飾を足し算するのではなく、整列・余白・細い罫線だけで見せる方向。
+
+// レタースペーシング付きのテキストを描く（canvasにletter-spacingが無いため自前で実装）
+function drawTracked(ctx, text, x, y, opts) {
+  ctx.save();
+  ctx.font = opts.font;
+  ctx.fillStyle = opts.color;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  let cx = x;
+  for (const ch of text) {
+    ctx.fillText(ch, cx, y);
+    cx += ctx.measureText(ch).width + (opts.spacing || 0);
+  }
+  ctx.restore();
+  return cx; // 描き終わった右端のx座標を返す
+}
 
 function roundRectPath(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -251,153 +266,107 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawDotPattern(ctx, w, h) {
-  ctx.save();
-  ctx.fillStyle = "rgba(212,168,67,.07)";
-  const gap = 24;
-  for (let y = 12; y < h; y += gap) {
-    for (let x = 12; x < w; x += gap) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1.3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-}
+function drawMinimalHeader(ctx, headerText, W, margin, headerH) {
+  // 上の小さいラベル（トラッキングを効かせたキャップス）
+  drawTracked(ctx, "SELECTED FILMS", margin, margin + 18, {
+    font: "600 11px sans-serif", color: "#9c9686", spacing: 2.5
+  });
 
-function drawStampTitle(ctx, text, W, topY) {
-  // 本体タイトル：ほんの少し傾けて版画・はんこのような手仕事感を出す
-  ctx.save();
-  ctx.translate(W / 2 - 16, topY);
-  ctx.rotate((-1.4 * Math.PI) / 180);
-  ctx.fillStyle = "#f3ead8";
-  ctx.font = "bold 34px serif";
-  ctx.textAlign = "center";
-  ctx.fillText(text, 0, 0);
-  ctx.restore();
+  // メインの見出し
+  ctx.fillStyle = "#2a2924";
+  ctx.font = "700 34px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(headerText, margin, margin + 56);
 
-  // 右肩に重なる丸スタンプ（「4」を選んだことを表す）
-  ctx.save();
-  ctx.translate(W - 58, topY - 28);
-  ctx.rotate((13 * Math.PI) / 180);
+  // 見出し下の細い罫線（無印らしい、装飾を足さない一本線）
+  ctx.strokeStyle = "#d8d3c4";
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2);
-  ctx.strokeStyle = "#c84830";
-  ctx.lineWidth = 2.5;
+  ctx.moveTo(margin, headerH - 8);
+  ctx.lineTo(W - margin, headerH - 8);
   ctx.stroke();
-  ctx.fillStyle = "#c84830";
-  ctx.font = "bold 18px serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("4", 0, 1);
-  ctx.restore();
-
-  // 下に細いゴシックの添え書き
-  ctx.fillStyle = "rgba(212,168,67,.75)";
-  ctx.font = "11px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText("— A MOVIE COLLAGE —", W / 2, topY + 26);
 }
+
 
 async function buildShareImage(movies, headerText) {
-  const TILE = 332, GAP = 24, SIDE = 32, TOP = 150;
-  const W = SIDE * 2 + TILE * 2 + GAP;
-  const H = TOP + TILE * 2 + GAP + 56;
+  const MARGIN = 48, GAP = 16, TILE = 320, HEADER_H = 110, FOOTER_H = 56;
+  const W = MARGIN * 2 + TILE * 2 + GAP;
+  const H = HEADER_H + TILE * 2 + GAP + FOOTER_H;
+
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  // 背景：温かみのあるダークトーン＋ドット柄
-  ctx.fillStyle = "#0c0a08";
+  // 背景：紙のような温かいオフホワイト（無印のパッケージを意識）
+  ctx.fillStyle = "#f5f3ee";
   ctx.fillRect(0, 0, W, H);
-  drawDotPattern(ctx, W, H);
 
-  drawStampTitle(ctx, headerText, W, 70);
+  drawMinimalHeader(ctx, headerText, W, MARGIN, HEADER_H);
 
   const positions = [
-    [SIDE, TOP],
-    [SIDE + TILE + GAP, TOP],
-    [SIDE, TOP + TILE + GAP],
-    [SIDE + TILE + GAP, TOP + TILE + GAP]
+    [MARGIN, HEADER_H],
+    [MARGIN + TILE + GAP, HEADER_H],
+    [MARGIN, HEADER_H + TILE + GAP],
+    [MARGIN + TILE + GAP, HEADER_H + TILE + GAP]
   ];
-  const angles = [-3.2, 2.6, -2.2, 3.6]; // 度。1枚ずつ向きを変えて貼り合わせた感じに
-  const tapeColors = ["rgba(196,72,48,.82)", "rgba(212,168,67,.82)"];
 
   for (let i = 0; i < movies.length && i < 4; i++) {
     const m = movies[i];
-    const [bx, by] = positions[i];
-    const cx = bx + TILE / 2;
-    const cy = by + TILE / 2;
+    const [x, y] = positions[i];
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate((angles[i] * Math.PI) / 180);
-
-    // ポラロイド風の白フチ＋影
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.55)";
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 10;
-    ctx.fillStyle = "#f7f3ea";
-    roundRectPath(ctx, -TILE / 2 - 9, -TILE / 2 - 9, TILE + 18, TILE + 58, 4);
-    ctx.fill();
-    ctx.restore();
-
-    // ポスター画像（角を少し丸めてクリップ）
+    // ポスター（角丸はごくわずか、装飾を足さずシャープに）
     try {
       if (m.poster) {
         const img = await loadImage(proxify(m.poster));
         ctx.save();
-        roundRectPath(ctx, -TILE / 2, -TILE / 2, TILE, TILE, 2);
+        roundRectPath(ctx, x, y, TILE, TILE, 2);
         ctx.clip();
-        drawCover(ctx, img, -TILE / 2, -TILE / 2, TILE, TILE);
+        drawCover(ctx, img, x, y, TILE, TILE);
         ctx.restore();
       } else {
-        ctx.fillStyle = "#1c1a16";
-        ctx.fillRect(-TILE / 2, -TILE / 2, TILE, TILE);
+        ctx.fillStyle = "#e7e3d8";
+        ctx.fillRect(x, y, TILE, TILE);
       }
     } catch (e) {
       console.error("ポスター読み込み失敗:", m.title, e);
-      ctx.fillStyle = "#1c1a16";
-      ctx.fillRect(-TILE / 2, -TILE / 2, TILE, TILE);
+      ctx.fillStyle = "#e7e3d8";
+      ctx.fillRect(x, y, TILE, TILE);
     }
 
-    // マスキングテープ風のアクセント（左上にぺたっと貼った風）
-    ctx.save();
-    ctx.translate(-TILE / 2 + 14, -TILE / 2 - 2);
-    ctx.rotate((-20 * Math.PI) / 180);
-    ctx.fillStyle = tapeColors[i % 2];
-    ctx.fillRect(-30, -10, 60, 19);
-    ctx.restore();
+    // ポスター周りの極細ライン（強い枠ではなく、輪郭がわかる程度に）
+    ctx.strokeStyle = "rgba(42,41,36,.12)";
+    ctx.lineWidth = 1;
+    roundRectPath(ctx, x + 0.5, y + 0.5, TILE - 1, TILE - 1, 2);
+    ctx.stroke();
 
-    // 通し番号（丸囲み）
-    ctx.beginPath();
-    ctx.arc(TILE / 2 - 16, -TILE / 2 + 16, 13, 0, Math.PI * 2);
-    ctx.fillStyle = "#0c0a08";
-    ctx.fill();
-    ctx.fillStyle = "#f3ead8";
-    ctx.font = "bold 13px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(String(i + 1).padStart(2, "0"), TILE / 2 - 16, TILE / -2 + 17);
-    ctx.textBaseline = "alphabetic";
-
-    // タイトル（白フチ部分に手書きラベル風に）
-    ctx.fillStyle = "#1a1410";
-    ctx.font = "bold 17px sans-serif";
+    // ラベル行：通し番号 + タイトル（写真のキャプションのような、簡潔な一行〜二行）
+    const labelY = y + TILE + 22;
+    ctx.fillStyle = "#a39d8c";
+    ctx.font = "600 12px sans-serif";
     ctx.textAlign = "left";
-    const lines = wrapLines(ctx, m.title, TILE - 6, 2);
-    lines.forEach((l, li) => ctx.fillText(l, -TILE / 2 + 2, TILE / 2 + 22 + li * 20));
+    ctx.fillText(String(i + 1).padStart(2, "0"), x, labelY);
 
-    ctx.restore();
+    ctx.fillStyle = "#2a2924";
+    ctx.font = "600 15px sans-serif";
+    const lines = wrapLines(ctx, m.title, TILE - 30, 2);
+    lines.forEach((l, li) => ctx.fillText(l, x + 26, labelY + li * 19));
   }
 
-  // フッター
-  ctx.fillStyle = "rgba(212,168,67,.55)";
-  ctx.font = "11px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(`もっと広めたい映画${PICK_COUNT}選`, W / 2, H - 18);
+  // フッター：最小限のテキストのみ
+  ctx.strokeStyle = "#d8d3c4";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(MARGIN, H - FOOTER_H + 14);
+  ctx.lineTo(W - MARGIN, H - FOOTER_H + 14);
+  ctx.stroke();
+
+  ctx.fillStyle = "#a39d8c";
+  ctx.font = "500 11px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`#もっと広めたい映画${PICK_COUNT}選`, MARGIN, H - 20);
+  ctx.textAlign = "right";
+  ctx.fillText(location.host, W - MARGIN, H - 20);
+  ctx.textAlign = "left";
 
   return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
 }
