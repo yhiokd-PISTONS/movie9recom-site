@@ -87,6 +87,15 @@ body{background:#080808;color:#f0ede8;font-family:'DM Sans',system-ui,sans-serif
 .res-h2{font-family:'Playfair Display',Georgia,serif;font-size:clamp(20px,5vw,30px);margin-bottom:16px;line-height:1.2;}
 .res-badge{display:inline-block;font-size:12px;color:#888;background:#141414;border:1px solid #222;border-radius:100px;padding:6px 16px;margin-bottom:32px;}
 
+.dmatch{position:relative;background:#13110d;border:1px solid #2a2419;border-radius:14px;padding:24px 22px 20px;margin-bottom:28px;text-align:center;overflow:visible;}
+.dmatch-tape{position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-3deg);width:88px;height:22px;background:rgba(196,72,48,.85);border-radius:2px;}
+.dmatch-eyebrow{font-size:10px;letter-spacing:3px;color:#d4a843;margin-bottom:12px;}
+.dmatch-text{font-size:14px;color:#ccc;margin-bottom:4px;}
+.dmatch-name{font-family:'Playfair Display',Georgia,serif;font-weight:700;color:#f0ede8;font-size:17px;padding:0 2px;}
+.dmatch-pct{font-family:'Playfair Display',Georgia,serif;font-size:44px;font-weight:700;color:#d4a843;line-height:1.2;}
+.dmatch-pct-u{font-size:16px;font-weight:500;color:#d4a843;margin-left:2px;}
+.dmatch-note{font-size:10px;color:#3a3a3a;margin-top:8px;line-height:1.5;}
+
 .rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:28px;}
 .rc{aspect-ratio:2/3;border-radius:9px;background:#0f0f0f;border:1px solid #1e1e1e;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s;}
 .rc:hover{border-color:#d4a843;transform:translateY(-2px);}
@@ -228,50 +237,167 @@ function wrapLines(ctx, text, maxWidth, maxLines) {
   return out.slice(0, maxLines);
 }
 
+// ── デザインパーツ：祖父江慎的な「コラージュ感・手仕事感」を意識した装飾 ──
+// （角丸の四角、ドット柄の背景、貼り合わせたようなテープのアクセント、
+//   少し傾いた配置とはんこ風のタイトルで「紙モノ感」を出している）
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawDotPattern(ctx, w, h) {
+  ctx.save();
+  ctx.fillStyle = "rgba(212,168,67,.07)";
+  const gap = 24;
+  for (let y = 12; y < h; y += gap) {
+    for (let x = 12; x < w; x += gap) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawStampTitle(ctx, text, W, topY) {
+  // 本体タイトル：ほんの少し傾けて版画・はんこのような手仕事感を出す
+  ctx.save();
+  ctx.translate(W / 2 - 16, topY);
+  ctx.rotate((-1.4 * Math.PI) / 180);
+  ctx.fillStyle = "#f3ead8";
+  ctx.font = "bold 34px serif";
+  ctx.textAlign = "center";
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+
+  // 右肩に重なる丸スタンプ（「4」を選んだことを表す）
+  ctx.save();
+  ctx.translate(W - 58, topY - 28);
+  ctx.rotate((13 * Math.PI) / 180);
+  ctx.beginPath();
+  ctx.arc(0, 0, 22, 0, Math.PI * 2);
+  ctx.strokeStyle = "#c84830";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.fillStyle = "#c84830";
+  ctx.font = "bold 18px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("4", 0, 1);
+  ctx.restore();
+
+  // 下に細いゴシックの添え書き
+  ctx.fillStyle = "rgba(212,168,67,.75)";
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("— A MOVIE COLLAGE —", W / 2, topY + 26);
+}
+
 async function buildShareImage(movies, headerText) {
-  const TILE = 380, GAP = 6, TOP = 110;
-  const W = TILE * 2 + GAP;
-  const H = TOP + TILE * 2 + GAP;
+  const TILE = 332, GAP = 24, SIDE = 32, TOP = 150;
+  const W = SIDE * 2 + TILE * 2 + GAP;
+  const H = TOP + TILE * 2 + GAP + 56;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#080808";
+  // 背景：温かみのあるダークトーン＋ドット柄
+  ctx.fillStyle = "#0c0a08";
   ctx.fillRect(0, 0, W, H);
+  drawDotPattern(ctx, W, H);
 
-  ctx.fillStyle = "#d4a843";
-  ctx.font = "bold 34px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(headerText, W / 2, 68);
+  drawStampTitle(ctx, headerText, W, 70);
 
-  const positions = [[0, TOP], [TILE + GAP, TOP], [0, TOP + TILE + GAP], [TILE + GAP, TOP + TILE + GAP]];
+  const positions = [
+    [SIDE, TOP],
+    [SIDE + TILE + GAP, TOP],
+    [SIDE, TOP + TILE + GAP],
+    [SIDE + TILE + GAP, TOP + TILE + GAP]
+  ];
+  const angles = [-3.2, 2.6, -2.2, 3.6]; // 度。1枚ずつ向きを変えて貼り合わせた感じに
+  const tapeColors = ["rgba(196,72,48,.82)", "rgba(212,168,67,.82)"];
 
   for (let i = 0; i < movies.length && i < 4; i++) {
     const m = movies[i];
-    const [x, y] = positions[i];
+    const [bx, by] = positions[i];
+    const cx = bx + TILE / 2;
+    const cy = by + TILE / 2;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((angles[i] * Math.PI) / 180);
+
+    // ポラロイド風の白フチ＋影
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.55)";
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 10;
+    ctx.fillStyle = "#f7f3ea";
+    roundRectPath(ctx, -TILE / 2 - 9, -TILE / 2 - 9, TILE + 18, TILE + 58, 4);
+    ctx.fill();
+    ctx.restore();
+
+    // ポスター画像（角を少し丸めてクリップ）
     try {
       if (m.poster) {
         const img = await loadImage(proxify(m.poster));
-        drawCover(ctx, img, x, y, TILE, TILE);
+        ctx.save();
+        roundRectPath(ctx, -TILE / 2, -TILE / 2, TILE, TILE, 2);
+        ctx.clip();
+        drawCover(ctx, img, -TILE / 2, -TILE / 2, TILE, TILE);
+        ctx.restore();
       } else {
-        ctx.fillStyle = "#141414"; ctx.fillRect(x, y, TILE, TILE);
+        ctx.fillStyle = "#1c1a16";
+        ctx.fillRect(-TILE / 2, -TILE / 2, TILE, TILE);
       }
     } catch (e) {
       console.error("ポスター読み込み失敗:", m.title, e);
-      ctx.fillStyle = "#141414"; ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = "#1c1a16";
+      ctx.fillRect(-TILE / 2, -TILE / 2, TILE, TILE);
     }
-    const grad = ctx.createLinearGradient(x, y + TILE - 110, x, y + TILE);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(0,0,0,.88)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, y + TILE - 110, TILE, 110);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 22px sans-serif";
+    // マスキングテープ風のアクセント（左上にぺたっと貼った風）
+    ctx.save();
+    ctx.translate(-TILE / 2 + 14, -TILE / 2 - 2);
+    ctx.rotate((-20 * Math.PI) / 180);
+    ctx.fillStyle = tapeColors[i % 2];
+    ctx.fillRect(-30, -10, 60, 19);
+    ctx.restore();
+
+    // 通し番号（丸囲み）
+    ctx.beginPath();
+    ctx.arc(TILE / 2 - 16, -TILE / 2 + 16, 13, 0, Math.PI * 2);
+    ctx.fillStyle = "#0c0a08";
+    ctx.fill();
+    ctx.fillStyle = "#f3ead8";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(i + 1).padStart(2, "0"), TILE / 2 - 16, TILE / -2 + 17);
+    ctx.textBaseline = "alphabetic";
+
+    // タイトル（白フチ部分に手書きラベル風に）
+    ctx.fillStyle = "#1a1410";
+    ctx.font = "bold 17px sans-serif";
     ctx.textAlign = "left";
-    const lines = wrapLines(ctx, m.title, TILE - 32, 2);
-    lines.forEach((l, li) => ctx.fillText(l, x + 16, y + TILE - 58 + li * 28));
+    const lines = wrapLines(ctx, m.title, TILE - 6, 2);
+    lines.forEach((l, li) => ctx.fillText(l, -TILE / 2 + 2, TILE / 2 + 22 + li * 20));
+
+    ctx.restore();
   }
+
+  // フッター
+  ctx.fillStyle = "rgba(212,168,67,.55)";
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`もっと広めたい映画${PICK_COUNT}選`, W / 2, H - 18);
 
   return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
 }
@@ -326,9 +452,9 @@ function App() {
   const [ldgMsg, setLdgMsg] = useState(0);
   const [recs, setRecs] = useState([]);
   const [simCnt, setSimCnt] = useState(0);
+  const [directorMatch, setDirectorMatch] = useState(null);
   const [error, setError] = useState("");
   const [selectedRec, setSelectedRec] = useState(null);
-  const [sharing, setSharing] = useState(false);
   const [savingPicks, setSavingPicks] = useState(false);
   const [savingRecs, setSavingRecs] = useState(false);
   const [toast, setToast] = useState("");
@@ -391,6 +517,7 @@ function App() {
       const data = await submitPicks(sid, picks);
       setRecs(data.recs || []);
       setSimCnt(data.similarUsers || 0);
+      setDirectorMatch(data.directorMatch || null);
       setPhase("results");
     } catch (e) {
       setError("通信に失敗しました。もう一度お試しください。");
@@ -398,39 +525,10 @@ function App() {
     }
   };
 
-  const handleShare = async () => {
-    setSharing(true);
-    const shareText = `私の好きな映画${PICK_COUNT}選\n${location.origin}`;
-    let blob = null;
-    try {
-      blob = await buildShareImage(picks, `私の好きな映画${PICK_COUNT}選`);
-    } catch (e) {
-      console.error("画像生成エラー:", e);
-    }
-
-    if (blob && window.navigator && navigator.canShare && navigator.share) {
-      try {
-        const file = new File([blob], "my-movies.png", { type: "image/png" });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], text: shareText });
-          setSharing(false);
-          return;
-        }
-      } catch (e) {
-        // ユーザーがキャンセルした場合などはフォールバックへ
-      }
-    }
-
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "my-movies.png";
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
-      showToast("画像をダウンロードしました。Xの投稿画面に手動で添付してください📎");
-    }
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
-    setSharing(false);
+  const handleShare = () => {
+    const list = picks.map(p => `・${p.title}`).join("\n");
+    const text = `私が選んだ${PICK_COUNT}本はコチラ\n\n${list}\n\n#もっと広めたい映画${PICK_COUNT}選\n${location.origin}`;
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const handleSavePicks = async () => {
@@ -457,7 +555,7 @@ function App() {
 
   const handleReset = () => {
     setPicks([]); setRecs([]); setPhase("select");
-    setSimCnt(0); setQ(""); setSelectedRec(null);
+    setSimCnt(0); setQ(""); setSelectedRec(null); setDirectorMatch(null);
   };
 
   return (
@@ -564,6 +662,18 @@ function App() {
             <div className="res-badge">{simCnt >= 3 ? `👥 ${simCnt}人の近い趣向のユーザーによる推薦` : "🎞️ まだユーザーが少ないため類似作品から推薦"}</div>
           </div>
 
+          {directorMatch && (
+            <div className="dmatch">
+              <div className="dmatch-tape" />
+              <div className="dmatch-eyebrow">YOUR TASTE TWIN</div>
+              <div className="dmatch-text">
+                あなたの趣味は<span className="dmatch-name">{directorMatch.name}</span>監督と
+              </div>
+              <div className="dmatch-pct">{directorMatch.pct}<span className="dmatch-pct-u">% 近い</span></div>
+              <div className="dmatch-note">（選んだ4本のジャンル傾向と、監督の全作品の傾向を比較して算出）</div>
+            </div>
+          )}
+
           <div className="rec-grid">
             {recs.map((m, i) => (
               <div key={m.id || i} className="rc" onClick={() => setSelectedRec(m)}>
@@ -593,8 +703,8 @@ function App() {
             <button className="act-btn save" onClick={handleSaveRecs} disabled={savingRecs}>
               {savingRecs ? "作成中..." : "📥 おすすめされた4本を\n画像で保存"}
             </button>
-            <button className="act-btn share" onClick={handleShare} disabled={sharing}>
-              {sharing ? "画像を作成中..." : "𝕏 でシェア"}
+            <button className="act-btn share" onClick={handleShare}>
+              𝕏 でシェア
             </button>
             <button className="act-btn reset" onClick={handleReset}>やり直す</button>
           </div>
